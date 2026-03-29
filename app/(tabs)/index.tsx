@@ -1,98 +1,222 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ResizeMode, Video } from 'expo-av';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import useGymStore from '@/stores/gym.store';
+import type { FeedItem, GymRoute } from '@/types/climbing';
 
-export default function HomeScreen() {
+type HubTab = 'routes' | 'feed';
+
+export default function GymHubScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const tint = Colors[colorScheme ?? 'light'].tint;
+  const icon = Colors[colorScheme ?? 'light'].icon;
+
+  const [tab, setTab] = useState<HubTab>('routes');
+  const hydrate = useGymStore((s) => s.hydrate);
+  const routes = useGymStore((s) => s.routes);
+  const isLoading = useGymStore((s) => s.isLoading);
+  const getFeed = useGymStore((s) => s.getFeed);
+
+  useEffect(() => {
+    if (routes.length === 0) void hydrate();
+  }, [routes.length, hydrate]);
+
+  const onRefresh = useCallback(() => {
+    void hydrate();
+  }, [hydrate]);
+
+  const feed = getFeed();
+
+  const renderRoute = useCallback(
+    ({ item }: { item: GymRoute }) => (
+      <Pressable
+        style={[styles.routeCard, { borderColor: icon }]}
+        onPress={() => router.push(`/route/${item.id}`)}>
+        <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
+        <ThemedText style={styles.muted}>
+          {item.grade} · {item.sector}
+        </ThemedText>
+        <ThemedText style={styles.smallMuted}>Set {item.setDate}</ThemedText>
+      </Pressable>
+    ),
+    [router, icon]
+  );
+
+  const renderFeed = useCallback(
+    ({ item }: { item: FeedItem }) => (
+      <Pressable
+        style={[styles.feedCard, { borderColor: icon }]}
+        onPress={() => router.push(`/route/${item.routeId}`)}>
+        <View style={styles.feedHeader}>
+          <ThemedText type="defaultSemiBold">{item.userName}</ThemedText>
+          <ThemedText style={styles.muted}>{item.style}</ThemedText>
+        </View>
+        <ThemedText>
+          {item.routeName} <ThemedText style={styles.muted}>({item.routeGrade})</ThemedText>
+        </ThemedText>
+        <ThemedText style={styles.smallMuted}>
+          {new Date(item.loggedAt).toLocaleString(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })}
+        </ThemedText>
+        {item.note ? <ThemedText style={styles.note}>{item.note}</ThemedText> : null}
+        {item.videoUrl ? (
+          <Video
+            style={styles.feedVideo}
+            source={{ uri: item.videoUrl }}
+            useNativeControls
+            resizeMode={ResizeMode.CONTAIN}
+          />
+        ) : null}
+      </Pressable>
+    ),
+    [router, icon]
+  );
+
+  const keyRoute = useCallback((r: GymRoute) => r.id, []);
+  const keyFeed = useCallback((f: FeedItem) => f.id, []);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ThemedView style={[styles.container, { paddingTop: insets.top + 12 }]}>
+      <View style={styles.topRow}>
+        <ThemedText type="title">Gym</ThemedText>
+        <Pressable style={[styles.logBtn, { backgroundColor: tint }]} onPress={() => router.push('/log-ascent')}>
+          <ThemedText style={styles.logBtnText}>Log ascent</ThemedText>
+        </Pressable>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={[styles.segment, { borderColor: icon }]}>
+        <Pressable
+          style={[styles.segmentItem, tab === 'routes' && { backgroundColor: `${tint}28` }]}
+          onPress={() => setTab('routes')}>
+          <ThemedText type={tab === 'routes' ? 'defaultSemiBold' : 'default'}>Routes</ThemedText>
+        </Pressable>
+        <Pressable
+          style={[styles.segmentItem, tab === 'feed' && { backgroundColor: `${tint}28` }]}
+          onPress={() => setTab('feed')}>
+          <ThemedText type={tab === 'feed' ? 'defaultSemiBold' : 'default'}>Community</ThemedText>
+        </Pressable>
+      </View>
+
+      {isLoading && routes.length === 0 ? (
+        <ActivityIndicator size="large" color={tint} style={styles.loader} />
+      ) : null}
+
+      {tab === 'routes' ? (
+        <FlatList
+          data={routes}
+          keyExtractor={keyRoute}
+          renderItem={renderRoute}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={isLoading && routes.length > 0} onRefresh={onRefresh} tintColor={tint} />}
+          ListEmptyComponent={
+            !isLoading ? <ThemedText style={styles.muted}>No routes loaded.</ThemedText> : null
+          }
+        />
+      ) : (
+        <FlatList
+          data={feed}
+          keyExtractor={keyFeed}
+          renderItem={renderFeed}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={isLoading && routes.length > 0} onRefresh={onRefresh} tintColor={tint} />}
+          ListEmptyComponent={
+            !isLoading ? <ThemedText style={styles.muted}>No activity yet.</ThemedText> : null
+          }
+        />
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  logBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  logBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  segment: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  segmentItem: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  list: {
+    paddingBottom: 24,
+    gap: 12,
+  },
+  routeCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 4,
+  },
+  feedCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  feedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  muted: {
+    opacity: 0.75,
+  },
+  smallMuted: {
+    opacity: 0.6,
+    fontSize: 13,
+  },
+  note: {
+    fontStyle: 'italic',
+    opacity: 0.9,
+  },
+  feedVideo: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 10,
+    backgroundColor: '#000',
+  },
+  loader: {
+    marginTop: 24,
   },
 });

@@ -1,18 +1,17 @@
 import { BaseStore } from "./store"
 
 export interface Profile {
-  userName: string,
-  email: string,
-  gymId?: string
-  gymName?: string,
-  gymRank?: number, 
-  level?: ClimberLevel,
-  projects?: string[],
+  userName: string;
+  email: string;
+  gymId?: string;
+  gymName?: string;
+  gymRank?: number;
+  level?: ClimberLevel;
+  projects?: string[];
 }
 
 export interface ProfileStore extends BaseStore {
-  profile: Profile,
-  
+  profile: Profile;
 }
 
 export enum ClimberLevel {
