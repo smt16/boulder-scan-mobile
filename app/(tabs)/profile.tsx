@@ -8,7 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ME_USER_ID } from '@/mocks/gym-data';
+import { useGetProfile } from '@/hooks/http/profile/useGetProfile';
+import useAuthStore from '@/stores/auth.store';
 import useGymStore from '@/stores/gym.store';
 import useProfile from '@/stores/profile.store';
 import type { Ascent } from '@/types/climbing';
@@ -28,7 +29,14 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
 
+  const session = useAuthStore((s) => s.session);
+  const signOut = useAuthStore((s) => s.signOut);
   const profile = useProfile((s) => s.profile);
+  const resetProfile = useProfile((s) => s.resetProfile);
+  const profileError = useProfile((s) => s.error);
+
+  useGetProfile(session?.userId);
+
   const hydrate = useGymStore((s) => s.hydrate);
   const routes = useGymStore((s) => s.routes);
   const ascents = useGymStore((s) => s.ascents);
@@ -43,12 +51,15 @@ export default function ProfileScreen() {
     void hydrate();
   }, [hydrate]);
 
-  const stats = getUserStats(ME_USER_ID);
-  const myAscents = ascents
-    .filter((a) => a.userId === ME_USER_ID)
-    .sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime());
+  const userId = session?.userId ?? '';
+  const stats = userId ? getUserStats(userId) : null;
+  const myAscents = userId
+    ? ascents
+        .filter((a) => a.userId === userId)
+        .sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime())
+    : [];
 
-  const displayName = profile.userName || 'Climber';
+  const displayName = profile.userName || session?.displayName || 'Climber';
 
   const renderAscent = useCallback(
     ({ item }: { item: Ascent }) => {
@@ -83,22 +94,38 @@ export default function ProfileScreen() {
 
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + 12 }]}>
-      <ThemedText type="title">{displayName}</ThemedText>
-      {profile.email ? <ThemedText style={styles.muted}>{profile.email}</ThemedText> : null}
+      <View style={styles.headerRow}>
+        <View style={styles.headerTitles}>
+          <ThemedText type="title">{displayName}</ThemedText>
+          {profile.email ? <ThemedText style={styles.muted}>{profile.email}</ThemedText> : null}
+          {profileError ? <ThemedText style={styles.errorText}>{profileError}</ThemedText> : null}
+        </View>
+        <Pressable
+          onPress={() => {
+            void (async () => {
+              await signOut();
+              resetProfile();
+            })();
+          }}>
+          <ThemedText type="defaultSemiBold" style={{ color: tint }}>
+            Sign out
+          </ThemedText>
+        </Pressable>
+      </View>
 
       <ThemedText type="subtitle" style={styles.section}>
         Your stats
       </ThemedText>
       <View style={styles.statsRow}>
-        <StatBlock label="Total ascents" value={stats.totalAscents} />
-        <StatBlock label="Unique routes" value={stats.uniqueRoutes} />
+        <StatBlock label="Total ascents" value={stats?.totalAscents ?? '—'} />
+        <StatBlock label="Unique routes" value={stats?.uniqueRoutes ?? '—'} />
       </View>
       <View style={styles.statsRow}>
-        <StatBlock label="Hardest send" value={stats.hardestGradeSent ?? '—'} />
-        <StatBlock label="Last 30 days" value={stats.ascentsLast30Days} />
+        <StatBlock label="Hardest send" value={stats?.hardestGradeSent ?? '—'} />
+        <StatBlock label="Last 30 days" value={stats?.ascentsLast30Days ?? '—'} />
       </View>
       <View style={styles.statsRow}>
-        <StatBlock label="With video" value={stats.withVideoCount} />
+        <StatBlock label="With video" value={stats?.withVideoCount ?? '—'} />
       </View>
 
       <View style={styles.sectionRow}>
@@ -126,6 +153,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  headerTitles: {
+    flex: 1,
+  },
+  errorText: {
+    color: '#c00',
+    marginTop: 6,
+    fontSize: 13,
   },
   muted: {
     opacity: 0.7,

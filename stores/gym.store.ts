@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Ascent, AscentStyle, FeedItem, GymRoute, RouteStats, UserClimbingStats } from '@/types/climbing';
-import { ME_USER_ID, MOCK_ASCENTS, MOCK_ROUTES } from '@/mocks/gym-data';
-import { API_ROUTES } from '@/constants/api-routes';
+import { getAscents, getRoutes, MockHttpError } from '@/lib/http/mock-client';
 
 const emptyStyleCounts = (): Record<AscentStyle, number> => ({
   flash: 0,
@@ -83,7 +82,7 @@ interface GymState {
   isLoading: boolean;
   error: string | null;
 
-  /** Loads mock data locally; later swap to fetch(API_ROUTES). */
+  /** Loads routes and ascents via mock HTTP client (no real network). */
   hydrate: () => Promise<void>;
 
   getRouteById: (id: string) => GymRoute | undefined;
@@ -111,16 +110,15 @@ const useGymStore = create<GymState>((set, get) => ({
   hydrate: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Future: parallel fetch(API_ROUTES.ROUTES.list), fetch(API_ROUTES.FEED.list), etc.
-      void API_ROUTES.ROUTES.list;
-      await new Promise((r) => setTimeout(r, 200));
+      const [routes, ascents] = await Promise.all([getRoutes(), getAscents()]);
       set({
-        routes: [...MOCK_ROUTES],
-        ascents: [...MOCK_ASCENTS],
+        routes: [...routes],
+        ascents: [...ascents],
         isLoading: false,
       });
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to load gym data';
+      const message =
+        e instanceof MockHttpError ? e.message : e instanceof Error ? e.message : 'Failed to load gym data';
       set({ error: message, isLoading: false });
     }
   },

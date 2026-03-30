@@ -64,7 +64,14 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach climb videos.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to record your send."
         }
-      ]
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.329483881130-ccp5e3pmebdd2v5fcopo0dn54vh989eq"
+        }
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

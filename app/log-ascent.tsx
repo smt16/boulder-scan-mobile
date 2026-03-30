@@ -16,8 +16,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import useAuthStore from '@/stores/auth.store';
 import useGymStore from '@/stores/gym.store';
-import { ME_USER_ID, ME_USER_NAME } from '@/mocks/gym-data';
 import type { AscentStyle } from '@/types/climbing';
 
 const STYLES_LIST: AscentStyle[] = ['flash', 'redpoint', 'onsight', 'attempt'];
@@ -30,6 +30,7 @@ export default function LogAscentScreen() {
   const bg = Colors[colorScheme ?? 'light'].background;
   const text = Colors[colorScheme ?? 'light'].text;
 
+  const session = useAuthStore((s) => s.session);
   const hydrate = useGymStore((s) => s.hydrate);
   const routes = useGymStore((s) => s.routes);
   const addAscent = useGymStore((s) => s.addAscent);
@@ -102,14 +103,14 @@ export default function LogAscentScreen() {
   }, [recording]);
 
   const onSubmit = useCallback(async () => {
-    if (!routeId || !getRouteById(routeId)) return;
+    if (!routeId || !getRouteById(routeId) || !session) return;
     setSubmitting(true);
     try {
       // TODO: upload local file:// video via presigned URL, then pass remote URL to API.
       addAscent({
         routeId,
-        userId: ME_USER_ID,
-        userName: ME_USER_NAME,
+        userId: session.userId,
+        userName: session.displayName,
         style,
         note: note.trim() || undefined,
         videoUrl: videoUri,
@@ -118,7 +119,7 @@ export default function LogAscentScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [routeId, style, note, videoUri, addAscent, router, getRouteById]);
+  }, [routeId, style, note, videoUri, addAscent, router, getRouteById, session]);
 
   const selectedRoute = routeId ? getRouteById(routeId) : undefined;
 
