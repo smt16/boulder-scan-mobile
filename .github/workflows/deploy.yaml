@@ -1,0 +1,77 @@
+# Standard Expo / EAS pipeline: lint, typecheck, static export, optional EAS cloud builds.
+# Does not run: eas submit, App Store Connect, or Google Play production rollout.
+#
+# Optional secret:
+#   EXPO_TOKEN  — from https://expo.dev/accounts/{account}/settings/access-tokens
+#   When set, pushes to the default branch also queue EAS preview builds (all platforms, no --auto-submit).
+name: CI & EAS (no store release)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  # Plausible placeholder so CI export/lint can resolve public env; override per-env in EAS.
+  EXPO_PUBLIC_API_BASE_URL: https://ci-placeholder.invalid
+
+jobs:
+  quality:
+    name: Lint, typecheck, Expo web export
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo doctor
+        run: npx expo-doctor@latest
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Verify static web export
+        # Matches app.json "web": { "output": "static" } — catches bundler/config issues early.
+        run: npx expo export --platform web
+
+  # Internal / preview EAS builds only — not App Store or Play store submission.
+  eas-preview:
+    name: EAS preview build (optional)
+    needs: quality
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.EXPO_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Queue EAS build (all platforms, preview profile, no submit)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform all --profile preview --non-interactive --no-wait
