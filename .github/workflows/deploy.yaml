@@ -53,11 +53,16 @@ jobs:
         run: npx expo export --platform web
 
   # Internal / preview EAS builds only — not App Store or Play store submission.
+  # Note: `secrets` cannot be used in job-level `if`. EXPO_TOKEN is read into `env` here; the EAS
+  # step runs only when the secret is non-empty (so the job is still scheduled on main without a token;
+  # only the EAS step is skipped).
   eas-preview:
     name: EAS preview build (optional)
     needs: quality
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.EXPO_TOKEN != '' }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
     runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,6 +77,5 @@ jobs:
         run: npm ci
 
       - name: Queue EAS build (all platforms, preview profile, no submit)
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        if: env.EXPO_TOKEN != ''
         run: npx eas-cli@latest build --platform all --profile preview --non-interactive --no-wait
