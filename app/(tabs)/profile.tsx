@@ -17,7 +17,7 @@ import type { Ascent } from '@/types/climbing';
 function StatBlock({ label, value }: { label: string; value: string | number }) {
   return (
     <ThemedView style={styles.statBlock}>
-      <ThemedText type="title">{value}</ThemedText>
+      <ThemedText type='title'>{value}</ThemedText>
       <ThemedText style={styles.statLabel}>{label}</ThemedText>
     </ThemedView>
   );
@@ -68,7 +68,7 @@ export default function ProfileScreen() {
         <Pressable
           style={styles.ascentCard}
           onPress={() => router.push(`/route/${item.routeId}`)}>
-          <ThemedText type="defaultSemiBold">{route?.name ?? item.routeId}</ThemedText>
+          <ThemedText type='defaultSemiBold'>{route?.name ?? item.routeId}</ThemedText>
           <ThemedText style={styles.muted}>
             {item.style} · {route?.grade ?? '?'}
           </ThemedText>
@@ -96,7 +96,7 @@ export default function ProfileScreen() {
     <ThemedView style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <View style={styles.headerRow}>
         <View style={styles.headerTitles}>
-          <ThemedText type="title">{displayName}</ThemedText>
+          <ThemedText type='title'>{displayName}</ThemedText>
           {profile.email ? <ThemedText style={styles.muted}>{profile.email}</ThemedText> : null}
           {profileError ? <ThemedText style={styles.errorText}>{profileError}</ThemedText> : null}
         </View>
@@ -107,31 +107,31 @@ export default function ProfileScreen() {
               resetProfile();
             })();
           }}>
-          <ThemedText type="defaultSemiBold" style={{ color: tint }}>
+          <ThemedText type='defaultSemiBold' style={{ color: tint }}>
             Sign out
           </ThemedText>
         </Pressable>
       </View>
 
-      <ThemedText type="subtitle" style={styles.section}>
+      <ThemedText type='subtitle' style={styles.section}>
         Your stats
       </ThemedText>
       <View style={styles.statsRow}>
-        <StatBlock label="Total ascents" value={stats?.totalAscents ?? '—'} />
-        <StatBlock label="Unique routes" value={stats?.uniqueRoutes ?? '—'} />
+        <StatBlock label='Total ascents' value={stats?.totalAscents ?? '—'} />
+        <StatBlock label='Unique routes' value={stats?.uniqueRoutes ?? '—'} />
       </View>
       <View style={styles.statsRow}>
-        <StatBlock label="Hardest send" value={stats?.hardestGradeSent ?? '—'} />
-        <StatBlock label="Last 30 days" value={stats?.ascentsLast30Days ?? '—'} />
+        <StatBlock label='Hardest send' value={stats?.hardestGradeSent ?? '—'} />
+        <StatBlock label='Last 30 days' value={stats?.ascentsLast30Days ?? '—'} />
       </View>
       <View style={styles.statsRow}>
-        <StatBlock label="With video" value={stats?.withVideoCount ?? '—'} />
+        <StatBlock label='With video' value={stats?.withVideoCount ?? '—'} />
       </View>
 
       <View style={styles.sectionRow}>
-        <ThemedText type="subtitle">My ascents</ThemedText>
+        <ThemedText type='subtitle'>My ascents</ThemedText>
         <Pressable onPress={() => router.push('/log-ascent')}>
-          <ThemedText type="defaultSemiBold" style={{ color: tint }}>
+          <ThemedText type='defaultSemiBold' style={{ color: tint }}>
             Log new
           </ThemedText>
         </Pressable>

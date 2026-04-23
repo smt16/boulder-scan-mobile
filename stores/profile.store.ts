@@ -1,7 +1,6 @@
-import { create } from 'zustand';
-
-import { getProfileById, MockHttpError } from '@/lib/http/mock-client';
+import { ApiError, getProfileById } from '@/lib/http/api';
 import type { Profile } from '@/types/profile';
+import { create } from 'zustand';
 
 type ProfileState = {
   profile: Profile;
@@ -32,7 +31,7 @@ const useProfile = create<ProfileState>((set) => ({
       set({ profile: data, isLoading: false });
     } catch (err: unknown) {
       const message =
-        err instanceof MockHttpError
+        err instanceof ApiError
           ? err.message
           : err instanceof Error
             ? err.message

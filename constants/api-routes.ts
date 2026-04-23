@@ -1,17 +1,19 @@
-const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
+const raw = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+const base = raw ? raw.replace(/\/$/, '') : 'http://localhost:3333';
 
 export const API_ROUTES = {
   AUTH: {
     login: `${base}/auth/login`,
+    signup: `${base}/auth/signup`,
     google: `${base}/auth/google`,
   },
   PROFILE: {
-    getById: (id: string) => `${base}/profile/${id}`,
+    getById: (id: string) => `${base}/profile/${encodeURIComponent(id)}`,
   },
   ROUTES: {
     list: `${base}/routes`,
-    getById: (id: string) => `${base}/routes/${id}`,
-    stats: (id: string) => `${base}/routes/${id}/stats`,
+    getById: (id: string) => `${base}/routes/${encodeURIComponent(id)}`,
+    stats: (id: string) => `${base}/routes/${encodeURIComponent(id)}/stats`,
   },
   ASCENTS: {
     list: `${base}/ascents`,

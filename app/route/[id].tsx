@@ -21,7 +21,7 @@ function StatChip({ label, value }: { label: string; value: string | number }) {
   const border = Colors[colorScheme ?? 'light'].icon;
   return (
     <ThemedView style={[styles.chip, { borderColor: border }]}>
-      <ThemedText type="defaultSemiBold">{value}</ThemedText>
+      <ThemedText type='defaultSemiBold'>{value}</ThemedText>
       <ThemedText style={styles.chipLabel}>{label}</ThemedText>
     </ThemedView>
   );
@@ -30,7 +30,7 @@ function StatChip({ label, value }: { label: string; value: string | number }) {
 function AscentRow({ ascent }: { ascent: { userName: string; style: AscentStyle; loggedAt: string } }) {
   return (
     <ThemedView style={styles.ascentRow}>
-      <ThemedText type="defaultSemiBold">{ascent.userName}</ThemedText>
+      <ThemedText type='defaultSemiBold'>{ascent.userName}</ThemedText>
       <ThemedText>{ascent.style}</ThemedText>
       <ThemedText style={styles.muted}>
         {new Date(ascent.loggedAt).toLocaleString(undefined, {
@@ -85,7 +85,7 @@ export default function RouteDetailScreen() {
   if (isLoading && !route) {
     return (
       <ThemedView style={styles.centered}>
-        <ActivityIndicator size="large" color={tint} />
+        <ActivityIndicator size='large' color={tint} />
       </ThemedView>
     );
   }
@@ -93,7 +93,7 @@ export default function RouteDetailScreen() {
   if (!route || !stats) {
     return (
       <ThemedView style={styles.centered}>
-        <ThemedText type="title">Route not found</ThemedText>
+        <ThemedText type='title'>Route not found</ThemedText>
         <ThemedText style={styles.muted}>Check the QR code or pick a route from the Gym tab.</ThemedText>
       </ThemedView>
     );
@@ -102,25 +102,25 @@ export default function RouteDetailScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">{route.name}</ThemedText>
+        <ThemedText type='title'>{route.name}</ThemedText>
         <ThemedText style={styles.subtitle}>
           {route.grade} · {route.sector}
         </ThemedText>
         <ThemedText style={styles.muted}>Set {route.setDate}</ThemedText>
       </ThemedView>
 
-      <ThemedText type="subtitle" style={styles.sectionTitle}>
+      <ThemedText type='subtitle' style={styles.sectionTitle}>
         Gym stats
       </ThemedText>
       <View style={styles.chipRow}>
-        <StatChip label="Total ascents" value={stats.totalAscents} />
-        <StatChip label="Unique climbers" value={stats.uniqueClimbers} />
+        <StatChip label='Total ascents' value={stats.totalAscents} />
+        <StatChip label='Unique climbers' value={stats.uniqueClimbers} />
       </View>
       <View style={styles.chipRow}>
-        <StatChip label="Flash" value={stats.byStyle.flash} />
-        <StatChip label="Redpoint" value={stats.byStyle.redpoint} />
-        <StatChip label="Onsight" value={stats.byStyle.onsight} />
-        <StatChip label="Attempts" value={stats.byStyle.attempt} />
+        <StatChip label='Flash' value={stats.byStyle.flash} />
+        <StatChip label='Redpoint' value={stats.byStyle.redpoint} />
+        <StatChip label='Onsight' value={stats.byStyle.onsight} />
+        <StatChip label='Attempts' value={stats.byStyle.attempt} />
       </View>
       {stats.lastAscentAt ? (
         <ThemedText style={styles.muted}>
@@ -132,7 +132,7 @@ export default function RouteDetailScreen() {
         <ThemedText style={styles.primaryBtnText}>Log ascent</ThemedText>
       </Pressable>
 
-      <ThemedText type="subtitle" style={styles.sectionTitle}>
+      <ThemedText type='subtitle' style={styles.sectionTitle}>
         Recent activity
       </ThemedText>
       {recent.map((a) => (

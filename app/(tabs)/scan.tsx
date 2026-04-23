@@ -71,7 +71,7 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: 24 }]}>
-        <ThemedText type="subtitle" style={styles.centerText}>
+        <ThemedText type='subtitle' style={styles.centerText}>
           Camera access is needed to scan route QR codes at the gym.
         </ThemedText>
         <Pressable style={[styles.btn, { backgroundColor: tint }]} onPress={() => requestPermission()}>
@@ -84,9 +84,9 @@ export default function ScanScreen() {
   return (
     <ThemedView style={styles.flex}>
       <View style={[styles.banner, { paddingTop: insets.top + 8 }]}>
-        <ThemedText type="defaultSemiBold">Scan route QR</ThemedText>
+        <ThemedText type='defaultSemiBold'>Scan route QR</ThemedText>
         <ThemedText style={styles.hint}>
-          Codes can be plain ids (e.g. r-1), JSON with routeId, or boulderscan://route/r-1
+          Codes can be plain ids (e.g. r-1), JSON with routeId, or gym-extension://route/r-1
         </ThemedText>
         <Pressable onPress={() => setScanning((s) => !s)}>
           <ThemedText style={{ color: tint }}>{scanning ? 'Pause scanner' : 'Resume'}</ThemedText>
@@ -94,7 +94,7 @@ export default function ScanScreen() {
       </View>
       <CameraView
         style={styles.camera}
-        facing="back"
+        facing='back'
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         onBarcodeScanned={scanning ? onBarcodeScanned : undefined}
       />

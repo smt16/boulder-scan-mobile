@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "boulder-scan",
-    "slug": "boulderscan",
+    "name": "gym-extension",
+    "slug": "gym-extension",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "boulderscan",
+    "scheme": "gym-extension",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.boulderscan.boulderscan",
+      "bundleIdentifier": "com.gym-extension.gym-extension",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -30,7 +30,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.boulderscan.boulderscan"
+      "package": "com.gym-extension.gym-extension"
     },
     "web": {
       "output": "static",
@@ -68,7 +68,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.329483881130-ccp5e3pmebdd2v5fcopo0dn54vh989eq"
+          "iosUrlScheme": "com.googleusercontent.apps.329483881130-tttr7vbch66paf4ae9getnr3nvg4p99c"
         }
       ],
       "expo-secure-store"

@@ -1,3 +1,15 @@
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import useAuthStore from '@/stores/auth.store';
+import useGymStore from '@/stores/gym.store';
+import type { AscentStyle } from '@/types/climbing';
+import { ResizeMode, Video } from 'expo-av';
+import type { CameraRecordingOptions } from 'expo-camera';
+import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,18 +19,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import type { CameraRecordingOptions } from 'expo-camera';
-import { ResizeMode, Video } from 'expo-av';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import useAuthStore from '@/stores/auth.store';
-import useGymStore from '@/stores/gym.store';
-import type { AscentStyle } from '@/types/climbing';
 
 const STYLES_LIST: AscentStyle[] = ['flash', 'redpoint', 'onsight', 'attempt'];
 
@@ -41,6 +41,7 @@ export default function LogAscentScreen() {
   const [note, setNote] = useState('');
   const [videoUri, setVideoUri] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [camPerm, requestCamPerm] = useCameraPermissions();
   const [micPerm, requestMicPerm] = useMicrophonePermissions();
@@ -105,9 +106,10 @@ export default function LogAscentScreen() {
   const onSubmit = useCallback(async () => {
     if (!routeId || !getRouteById(routeId) || !session) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
       // TODO: upload local file:// video via presigned URL, then pass remote URL to API.
-      addAscent({
+      await addAscent({
         routeId,
         userId: session.userId,
         userName: session.displayName,
@@ -116,6 +118,8 @@ export default function LogAscentScreen() {
         videoUrl: videoUri,
       });
       router.back();
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Could not save ascent');
     } finally {
       setSubmitting(false);
     }
@@ -132,15 +136,15 @@ export default function LogAscentScreen() {
               onPress={onSubmit}
               disabled={submitting || !selectedRoute}
               style={{ paddingHorizontal: 12, opacity: submitting || !selectedRoute ? 0.4 : 1 }}>
-              <ThemedText type="defaultSemiBold" style={{ color: tint }}>
+              <ThemedText type='defaultSemiBold' style={{ color: tint }}>
                 Save
               </ThemedText>
             </Pressable>
           ),
         }}
       />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <ThemedText type="subtitle">Route</ThemedText>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps='handled'>
+        <ThemedText type='subtitle'>Route</ThemedText>
         <View style={styles.routePick}>
           {routes.map((r) => (
             <Pressable
@@ -161,7 +165,7 @@ export default function LogAscentScreen() {
           <ThemedText style={styles.warn}>Unknown route id — pick one above.</ThemedText>
         ) : null}
 
-        <ThemedText type="subtitle" style={styles.gapTop}>
+        <ThemedText type='subtitle' style={styles.gapTop}>
           Style
         </ThemedText>
         <View style={styles.styleRow}>
@@ -179,13 +183,13 @@ export default function LogAscentScreen() {
           ))}
         </View>
 
-        <ThemedText type="subtitle" style={styles.gapTop}>
+        <ThemedText type='subtitle' style={styles.gapTop}>
           Note (optional)
         </ThemedText>
         <TextInput
           value={note}
           onChangeText={setNote}
-          placeholder="How did it feel?"
+          placeholder='How did it feel?'
           placeholderTextColor={`${text}88`}
           multiline
           style={[
@@ -194,21 +198,21 @@ export default function LogAscentScreen() {
           ]}
         />
 
-        <ThemedText type="subtitle" style={styles.gapTop}>
+        <ThemedText type='subtitle' style={styles.gapTop}>
           Video (optional)
         </ThemedText>
         <View style={styles.row}>
           <Pressable style={[styles.secondaryBtn, { borderColor: tint }]} onPress={pickVideo}>
-            <ThemedText type="defaultSemiBold">Choose from library</ThemedText>
+            <ThemedText type='defaultSemiBold'>Choose from library</ThemedText>
           </Pressable>
           <Pressable style={[styles.secondaryBtn, { borderColor: tint }]} onPress={startRecord}>
-            <ThemedText type="defaultSemiBold">Record</ThemedText>
+            <ThemedText type='defaultSemiBold'>Record</ThemedText>
           </Pressable>
         </View>
 
         {showCamera && camPerm?.granted ? (
           <ThemedView style={styles.cameraBox}>
-            <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="video" mute={false} />
+            <CameraView ref={cameraRef} style={styles.camera} facing='back' mode='video' mute={false} />
             <Pressable
               style={[styles.recordBtn, { backgroundColor: recording ? '#c00' : tint }]}
               onPress={toggleRecord}>
@@ -227,13 +231,16 @@ export default function LogAscentScreen() {
               resizeMode={ResizeMode.CONTAIN}
             />
             <Pressable onPress={() => setVideoUri(undefined)}>
-              <ThemedText type="defaultSemiBold" style={{ color: '#c00' }}>
+              <ThemedText type='defaultSemiBold' style={{ color: '#c00' }}>
                 Remove video
               </ThemedText>
             </Pressable>
           </ThemedView>
         ) : null}
 
+        {submitError ? (
+          <ThemedText style={{ color: '#c00', marginTop: 12 }}>{submitError}</ThemedText>
+        ) : null}
         {submitting ? <ActivityIndicator color={tint} style={{ marginTop: 16 }} /> : null}
       </ScrollView>
     </>

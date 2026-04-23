@@ -5,49 +5,95 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import { useEmailLogin } from '@/hooks/http/auth/useEmailLogin';
-import { useGoogleSignIn } from '@/hooks/http/auth/useGoogleSignIn';
+import { useAuth0 } from '@/hooks/http/auth/useAuth0';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { isAuth0Configured } from '@/lib/auth0-config';
 
 export default function SignInScreen() {
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
-  const bg = Colors[colorScheme ?? 'light'].background;
   const text = Colors[colorScheme ?? 'light'].text;
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const { login, isLoading: emailLoading, error: emailError, setError: setEmailError } = useEmailLogin();
   const {
-    signIn: googleSignIn,
-    isLoading: googleLoading,
-    error: googleError,
-    setError: setGoogleError,
-  } = useGoogleSignIn();
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signUpWithGoogle,
+    isLoading,
+    error,
+    setError,
+    isReady,
+  } = useAuth0();
+  const [configHint, setConfigHint] = useState<string | null>(null);
 
-  const busy = emailLoading || googleLoading;
+  const busy = isLoading;
+  const canUseAuth0 = isAuth0Configured() && isReady;
 
-  const onEmailSubmit = async () => {
-    setEmailError(null);
+  const onLogIn = async () => {
+    setError(null);
+    if (!isAuth0Configured()) {
+      setConfigHint(
+        'Add EXPO_PUBLIC_AUTH0_DOMAIN and EXPO_PUBLIC_AUTH0_CLIENT_ID to your env.',
+      );
+      return;
+    }
+    setConfigHint(null);
     try {
-      await login({ email, password });
+      await signIn();
     } catch {
       // error surfaced via hook state
     }
   };
 
-  const onGooglePress = async () => {
-    setGoogleError(null);
+  const onSignUp = async () => {
+    setError(null);
+    if (!isAuth0Configured()) {
+      setConfigHint(
+        'Add EXPO_PUBLIC_AUTH0_DOMAIN and EXPO_PUBLIC_AUTH0_CLIENT_ID to your env.',
+      );
+      return;
+    }
+    setConfigHint(null);
     try {
-      await googleSignIn();
+      await signUp();
+    } catch {
+      // error surfaced via hook state
+    }
+  };
+
+  const onGoogleLogIn = async () => {
+    setError(null);
+    if (!isAuth0Configured()) {
+      setConfigHint(
+        'Add EXPO_PUBLIC_AUTH0_DOMAIN and EXPO_PUBLIC_AUTH0_CLIENT_ID to your env.',
+      );
+      return;
+    }
+    setConfigHint(null);
+    try {
+      await signInWithGoogle();
+    } catch {
+      // error surfaced via hook state
+    }
+  };
+
+  const onGoogleSignUp = async () => {
+    setError(null);
+    if (!isAuth0Configured()) {
+      setConfigHint(
+        'Add EXPO_PUBLIC_AUTH0_DOMAIN and EXPO_PUBLIC_AUTH0_CLIENT_ID to your env.',
+      );
+      return;
+    }
+    setConfigHint(null);
+    try {
+      await signUpWithGoogle();
     } catch {
       // error surfaced via hook state
     }
@@ -57,74 +103,105 @@ export default function SignInScreen() {
     <ThemedView style={styles.outer}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboard}>
-        <ThemedText type="title" style={styles.title}>
+        style={styles.keyboard}
+      >
+        <ThemedText type='title' style={styles.title}>
           Boulder Scan
         </ThemedText>
         <ThemedText style={styles.subtitle}>Sign in to continue</ThemedText>
 
-        <View style={styles.field}>
-          <ThemedText type="defaultSemiBold">Email</ThemedText>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor={`${text}99`}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            editable={!busy}
-            style={[styles.input, { color: text, borderColor: `${text}33`, backgroundColor: bg }]}
-          />
-        </View>
+        {configHint ? (
+          <ThemedText style={styles.error}>{configHint}</ThemedText>
+        ) : null}
+        {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
+        {!canUseAuth0 && isAuth0Configured() ? (
+          <ThemedText style={styles.hint}>Preparing sign-in…</ThemedText>
+        ) : null}
 
-        <View style={styles.field}>
-          <ThemedText type="defaultSemiBold">Password</ThemedText>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={`${text}99`}
-            secureTextEntry
-            editable={!busy}
-            style={[styles.input, { color: text, borderColor: `${text}33`, backgroundColor: bg }]}
-          />
-        </View>
-
-        {emailError ? <ThemedText style={styles.error}>{emailError}</ThemedText> : null}
-        {googleError ? <ThemedText style={styles.error}>{googleError}</ThemedText> : null}
+        {busy ? (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator color={tint} />
+            <ThemedText style={styles.hint}>Signing in with Auth0…</ThemedText>
+          </View>
+        ) : null}
 
         <Pressable
-          style={[styles.primaryBtn, { backgroundColor: tint, opacity: busy ? 0.6 : 1 }]}
-          onPress={() => void onEmailSubmit()}
-          disabled={busy}>
-          {emailLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <ThemedText type="defaultSemiBold" lightColor="#fff" darkColor="#fff">
-              Sign in with email
-            </ThemedText>
-          )}
+          style={[
+            styles.primaryBtn,
+            { backgroundColor: tint, opacity: busy || !canUseAuth0 ? 0.6 : 1 },
+          ]}
+          onPress={() => void onLogIn()}
+          disabled={busy || !canUseAuth0}
+        >
+          <ThemedText type='defaultSemiBold' lightColor='#fff' darkColor='#fff'>
+            Log in
+          </ThemedText>
         </Pressable>
 
-        {Platform.OS !== 'web' ? (
-          <Pressable
-            style={[styles.secondaryBtn, { borderColor: `${text}44`, opacity: busy ? 0.6 : 1 }]}
-            onPress={() => void onGooglePress()}
-            disabled={busy}>
-            {googleLoading ? (
-              <ActivityIndicator color={tint} />
-            ) : (
-              <ThemedText type="defaultSemiBold">Continue with Google</ThemedText>
-            )}
-          </Pressable>
-        ) : (
-          <ThemedText style={styles.hint}>Google sign-in is available on iOS and Android.</ThemedText>
-        )}
+        <Pressable
+          style={[
+            styles.secondaryBtn,
+            {
+              borderColor: `${text}44`,
+              opacity: busy || !canUseAuth0 ? 0.6 : 1,
+            },
+          ]}
+          onPress={() => void onSignUp()}
+          disabled={busy || !canUseAuth0}
+        >
+          <ThemedText type='defaultSemiBold'>Create account</ThemedText>
+        </Pressable>
+
+        <View style={styles.dividerRow}>
+          <View
+            style={[styles.dividerLine, { backgroundColor: `${text}33` }]}
+          />
+          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <View
+            style={[styles.dividerLine, { backgroundColor: `${text}33` }]}
+          />
+        </View>
+
+        <ThemedText type='defaultSemiBold' style={styles.googleHeading}>
+          Google
+        </ThemedText>
+
+        <Pressable
+          style={[
+            styles.secondaryBtn,
+            {
+              borderColor: `${text}44`,
+              opacity: busy || !canUseAuth0 ? 0.6 : 1,
+            },
+          ]}
+          onPress={() => void onGoogleLogIn()}
+          disabled={busy || !canUseAuth0}
+        >
+          <ThemedText type='defaultSemiBold'>Log in with Google</ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.secondaryBtn,
+            {
+              borderColor: `${text}44`,
+              opacity: busy || !canUseAuth0 ? 0.6 : 1,
+            },
+          ]}
+          onPress={() => void onGoogleSignUp()}
+          disabled={busy || !canUseAuth0}
+        >
+          <ThemedText type='defaultSemiBold'>
+            Create account with Google
+          </ThemedText>
+        </Pressable>
 
         <ThemedText style={styles.demoHint}>
-          Demo: any email + non-empty password uses the mock Alex account. Google uses the mock Google
-          demo user.
+          Universal Login uses the Auth0 screen; Google options use the Auth0
+          Google social connection (enable Google under Authentication → Social,
+          connection name usually google-oauth2). Callback:{' '}
+          {`gym-extension://callback`}. Same backend: Bearer token to{' '}
+          {`EXPO_PUBLIC_API_BASE_URL`}/auth/login or /auth/signup.
         </ThemedText>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -151,16 +228,6 @@ const styles = StyleSheet.create({
     opacity: 0.75,
     marginBottom: 8,
   },
-  field: {
-    gap: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
   error: {
     color: '#c00',
     opacity: 0.9,
@@ -181,6 +248,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.65,
     marginTop: 4,
+  },
+  loadingRow: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 6,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth * 2,
+  },
+  dividerText: {
+    opacity: 0.5,
+    fontSize: 13,
+  },
+  googleHeading: {
+    fontSize: 13,
+    opacity: 0.7,
   },
   demoHint: {
     fontSize: 12,

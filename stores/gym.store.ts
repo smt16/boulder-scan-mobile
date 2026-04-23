@@ -1,6 +1,6 @@
-import { create } from 'zustand';
+import { ApiError, getAscents, getRoutes, postCreateAscent } from '@/lib/http/api';
 import type { Ascent, AscentStyle, FeedItem, GymRoute, RouteStats, UserClimbingStats } from '@/types/climbing';
-import { getAscents, getRoutes, MockHttpError } from '@/lib/http/mock-client';
+import { create } from 'zustand';
 
 const emptyStyleCounts = (): Record<AscentStyle, number> => ({
   flash: 0,
@@ -82,7 +82,7 @@ interface GymState {
   isLoading: boolean;
   error: string | null;
 
-  /** Loads routes and ascents via mock HTTP client (no real network). */
+  /** Loads routes and ascents from the API. */
   hydrate: () => Promise<void>;
 
   getRouteById: (id: string) => GymRoute | undefined;
@@ -98,7 +98,7 @@ interface GymState {
     style: AscentStyle;
     note?: string;
     videoUrl?: string;
-  }) => void;
+  }) => Promise<void>;
 }
 
 const useGymStore = create<GymState>((set, get) => ({
@@ -118,7 +118,7 @@ const useGymStore = create<GymState>((set, get) => ({
       });
     } catch (e: unknown) {
       const message =
-        e instanceof MockHttpError ? e.message : e instanceof Error ? e.message : 'Failed to load gym data';
+        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Failed to load gym data';
       set({ error: message, isLoading: false });
     }
   },
@@ -137,21 +137,9 @@ const useGymStore = create<GymState>((set, get) => ({
       .sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime())
       .slice(0, limit),
 
-  addAscent: (input) => {
-    const id = `a-${Date.now()}`;
-    const loggedAt = new Date().toISOString();
-    const next: Ascent = {
-      id,
-      routeId: input.routeId,
-      userId: input.userId,
-      userName: input.userName,
-      style: input.style,
-      loggedAt,
-      note: input.note,
-      videoUrl: input.videoUrl,
-    };
-    set((s) => ({ ascents: [next, ...s.ascents] }));
-    // TODO: POST API_ROUTES.ASCENTS.create; if videoUrl is local file://, request presigned upload first.
+  addAscent: async (input) => {
+    const created = await postCreateAscent(input);
+    set((s) => ({ ascents: [created, ...s.ascents] }));
   },
 }));
 

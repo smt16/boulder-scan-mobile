@@ -1,7 +1,6 @@
-import { useCallback, useState } from 'react';
-
-import { postEmailLogin, type EmailLoginBody, MockHttpError } from '@/lib/http/mock-client';
+import { ApiError, postEmailLogin, type EmailLoginBody } from '@/lib/http/api';
 import useAuthStore from '@/stores/auth.store';
+import { useCallback, useState } from 'react';
 
 export function useEmailLogin() {
   const setSession = useAuthStore((s) => s.setSession);
@@ -17,7 +16,7 @@ export function useEmailLogin() {
         await setSession(session);
       } catch (e) {
         const message =
-          e instanceof MockHttpError ? e.message : e instanceof Error ? e.message : 'Sign in failed';
+          e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Sign in failed';
         setError(message);
         throw e;
       } finally {

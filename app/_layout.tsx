@@ -5,9 +5,10 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
-import { configureGoogleSignIn } from '@/lib/google-signin-config';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { configureGoogleSignIn } from '@/lib/google-signin-config';
 import useAuthStore from '@/stores/auth.store';
+import * as WebBrowser from 'expo-web-browser';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -23,6 +24,10 @@ function AuthRoot() {
 
   useEffect(() => {
     configureGoogleSignIn();
+  }, []);
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
   }, []);
 
   useEffect(() => {
@@ -45,7 +50,7 @@ function AuthRoot() {
   if (!isStorageHydrated) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size='large' />
       </View>
     );
   }
@@ -53,24 +58,24 @@ function AuthRoot() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name='sign-in' options={{ headerShown: false }} />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen
-          name="route/[id]"
+          name='route/[id]'
           options={{
             title: 'Route',
             headerBackTitle: 'Back',
           }}
         />
         <Stack.Screen
-          name="log-ascent"
+          name='log-ascent'
           options={{
             presentation: 'modal',
             title: 'Log ascent',
           }}
         />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style='auto' />
     </ThemeProvider>
   );
 }

@@ -47,7 +47,7 @@ export default function GymHubScreen() {
       <Pressable
         style={[styles.routeCard, { borderColor: icon }]}
         onPress={() => router.push(`/route/${item.id}`)}>
-        <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
+        <ThemedText type='defaultSemiBold'>{item.name}</ThemedText>
         <ThemedText style={styles.muted}>
           {item.grade} · {item.sector}
         </ThemedText>
@@ -63,7 +63,7 @@ export default function GymHubScreen() {
         style={[styles.feedCard, { borderColor: icon }]}
         onPress={() => router.push(`/route/${item.routeId}`)}>
         <View style={styles.feedHeader}>
-          <ThemedText type="defaultSemiBold">{item.userName}</ThemedText>
+          <ThemedText type='defaultSemiBold'>{item.userName}</ThemedText>
           <ThemedText style={styles.muted}>{item.style}</ThemedText>
         </View>
         <ThemedText>
@@ -95,7 +95,7 @@ export default function GymHubScreen() {
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <View style={styles.topRow}>
-        <ThemedText type="title">Gym</ThemedText>
+        <ThemedText type='title'>Gym</ThemedText>
         <Pressable style={[styles.logBtn, { backgroundColor: tint }]} onPress={() => router.push('/log-ascent')}>
           <ThemedText style={styles.logBtnText}>Log ascent</ThemedText>
         </Pressable>
@@ -115,7 +115,7 @@ export default function GymHubScreen() {
       </View>
 
       {isLoading && routes.length === 0 ? (
-        <ActivityIndicator size="large" color={tint} style={styles.loader} />
+        <ActivityIndicator size='large' color={tint} style={styles.loader} />
       ) : null}
 
       {tab === 'routes' ? (

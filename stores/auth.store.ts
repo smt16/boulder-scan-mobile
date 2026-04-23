@@ -1,9 +1,8 @@
+import type { Session } from '@/types/auth';
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 
-import type { Session } from '@/mocks/auth-session';
-
-const STORAGE_KEY = 'boulderscan_auth_session';
+const STORAGE_KEY = 'gym-extension_auth_session';
 
 interface AuthState {
   session: Session | null;

@@ -1,4 +1,4 @@
-import { BaseStore } from "./store"
+import { BaseStore } from './store'
 
 export interface Profile {
   userName: string;
